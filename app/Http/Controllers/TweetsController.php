@@ -21,28 +21,32 @@ class TweetsController extends Controller
     }
 
     // Show a specific tweet and its stats
-    public function show()
+    public function stats()
     {
       return "these are stats";
     }
 
     // This is where we're going to store the tweets to mongo
-    public function store()
+    public function store(Request $request, $handle, $numTweets)
     {
 
       $connection = new TwitterOAuth(
-                          '9dOVWu3EUGnZYs9zcIaGYGbLt',
-                          'QM8faHe5pVhNKDBJiwCy7S78wOcPJTX9lnCcLGKr31mhDt82ro',
-                          '87588001-nlRnMIC7EFNiCsYq5p0yPw77zAvcKRbaWQhFNRtKM',
-                          'f2z4OGvRhhwljPLE4V8HRD41JNRX8MDdY3RffSEiudQjD'
+                          env('CONSUMER_KEY'),
+                          env('CONSUMER_SECRET'),
+                          env('ACCESS_TOKEN'),
+                          env('ACCESS_TOKEN_SECRET')
                         );
+
       $statuses = $connection->get(
                                 "statuses/user_timeline",
                                 [
-                                  "screen_name" => "chriswigington",
-                                  "count" => 25,
+                                  "screen_name" => $handle,
+                                  "count" => $numTweets,
                                   "exclude_replies" => true
                                 ]);
+
+      $firstStatus = ($statuses[0])->created_at;
+      return $statuses;
 
     }
 }

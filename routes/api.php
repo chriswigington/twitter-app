@@ -18,6 +18,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:api');
 
 Route::group(['prefix' => 'v1'], function() {
-  Route::resource('tweets', 'TweetsController');
-  Route::get('tweets/stats', 'TweetsController@stats');
+  Route::get('tweets', 'TweetsController@index');
+  Route::post('tweets/{handle}/{numTweets}', 'TweetsController@store');
+  Route::get('stats', 'TweetsController@stats');
 });
