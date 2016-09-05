@@ -19,6 +19,6 @@ Route::get('/tweets', function() {
     return "Hello, these are tweets";
 });
 
-Route::group(['prefix' => 'api/v1'], function() {
-  Route::resource('tweets', 'TweetsController');
-});
+// Route::group(['prefix' => 'api/v1'], function() {
+//   Route::resource('tweets', 'TweetsController');
+// });
