@@ -3,16 +3,22 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Tweet;
+
 use App\Http\Requests;
+
 use Illuminate\Support\Facades\DB;
+
 use Illuminate\Support\Facades\Schema;
+
 use Jenssegers\Mongodb\Schema\Blueprint;
+
 use Abraham\TwitterOAuth\TwitterOAuth;
+
+use App\Tweet;
 
 class TweetsController extends Controller
 {
-    // Retrieve tweets from database
+
     public function index()
     {
       if (Schema::hasCollection('tweets')) {
@@ -41,14 +47,13 @@ class TweetsController extends Controller
       }
     }
 
-    // Store specified number of tweets from certain handle to database
     public function store(Request $request, $handle, $numTweets)
     {
       $this->dropAndRecreateTweets();
 
       $statuses = $this->retrieveDataFromTwitter($handle, $numTweets);
 
-      $this->populate($statuses);
+      $this->populateDbWithTweets($statuses);
 
       return response()->json([
         'message' => "Retrieval and storage successful."
@@ -85,7 +90,7 @@ class TweetsController extends Controller
                             ]);
     }
 
-    private function populate($statuses)
+    private function populateDbWithTweets($statuses)
     {
       foreach ($statuses as $status)
       {
@@ -97,7 +102,7 @@ class TweetsController extends Controller
     {
       $tweet = new Tweet;
 
-      $tweet->id = $status->id;
+      $tweet->_id = $status->id;
       $tweet->day = substr($status->created_at, 0, 3);
       $tweet->hour = substr($status->created_at, 11, 2);
       $tweet->text = $status->text;
