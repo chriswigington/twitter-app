@@ -19,6 +19,7 @@ Route::get('/user', function (Request $request) {
 
 Route::group(['prefix' => 'v1'], function() {
   Route::get('tweets', 'TweetsController@index');
+  Route::get('tweets/{handle}/{numTweets}', 'TweetsController@store');
   Route::post('tweets/{handle}/{numTweets}', 'TweetsController@store');
   Route::get('stats', 'TweetsController@stats');
 });
