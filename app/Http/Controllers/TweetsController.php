@@ -118,7 +118,7 @@ class TweetsController extends Controller
 
       $days = [];
       $hours = [];
-      // $days_hours =[];
+      $days_hours =[];
 
       foreach ($daysOfWeek as $key => $value) {
         $days[$key] = DB::collection('tweets')->where('day', $value)->avg('retweets');
@@ -128,20 +128,27 @@ class TweetsController extends Controller
         $hours[$key] = DB::collection('tweets')->where('hour', $value)->avg('retweets');
       }
 
-      // foreach ($daysOfWeek as $weekday => $day) {
-      //   foreach($hoursOfTheDay as $time => $hour) {
-      //    $days_hours[$weekday][$] = DB::collection('tweets')
-                                        // ->where('day', $day)
-                                        // ->where('hour', $hour)
-                                        // ->avg('retweets');
-      //   }
-      // }
+      foreach ($daysOfWeek as $weekday => $day) {
+        foreach($hoursOfTheDay as $time => $hour) {
+         $days_hours[$weekday][$time] = DB::collection('tweets')
+                                        ->where('day', $day)
+                                        ->where('hour', $hour)
+                                        ->avg('retweets');
+        }
+      }
+
+      foreach ($days_hours as $weekday => $timesArray) {
+        $days_hours[$weekday] = $this->firstKey($timesArray);
+      }
 
       $day = $this->firstKey($days);
       $hour = $this->firstKey($hours);
 
-      return "$day was the day of the week with the highest number of retweets, "
-              ."while $hour was the time of day with the most retweets.";
+
+      return var_dump($days_hours);
+
+      //"$day was the day of the week with the highest number of retweets, "
+      //        ."while $hour was the time of day with the most retweets.";
     }
 
     /**
@@ -152,9 +159,9 @@ class TweetsController extends Controller
      */
     private function firstKey(array $array)
     {
-      asort($array);
+      arsort($array);
       reset($array);
-      return key($array);
+      return [key($array), current($array)];
     }
 
     /**
