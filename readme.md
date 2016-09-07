@@ -78,6 +78,6 @@ GET http://localhost:8000/api/v1/optimaltime/{field}
 
 ## Difficulties and Further Refinements
 
-This was my very first attempt at using PHP, Laravel, or MongoDB, and there are definitely some improvements I'd like to make to the project when I have more time. First and foremost is that currently all of my logic is living in my controller, so one of the first things I'd like to do is some further refactoring, and move methods over to models or service containers when I learn a little more about the Laravel architecture.
+This was my very first attempt at using PHP, Laravel, or MongoDB, and there are definitely some improvements I'd like to make to the project when I have more time. First and foremost is that currently all of my logic is living in the TweetsController, so one of the first things I'd like to do is some further refactoring, and moving methods over to models or service containers once I've learned a little more about the Laravel architecture.
 
-The limitations of the
+There were also a few limitations of the Twitter API to deal with. These included only being able to pull a maximum of 200 tweets at a time from a given timeline, which meant being fairly limited in what I could test. So another thing I would like to add given more time is an extensive seed that handles cases where there are a much greater number of tweets over a greater amount of time, and to also write some actual tests in Laravel to make sure that the application is working as expected.

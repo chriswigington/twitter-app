@@ -13,6 +13,26 @@ use DateInterval;
 
 class TweetsController extends Controller
 {
+    /**
+     * Store a certain number of tweets for a certain handle
+     *
+     * @param Illuminate\Http\Request $request
+     * @param string $handle
+     * @param string $numTweets
+     * @return response
+     */
+    public function store(Request $request, $handle, $numTweets)
+    {
+      $this->dropAndRecreateTweets();
+
+      $statuses = $this->retrieveDataFromTwitter($handle, $numTweets);
+
+      $this->populateDbWithTweets($statuses);
+
+      return response()->json([
+        'message' => "Retrieval and storage was successful."
+      ], 200);
+    }
 
     /**
      * Show all tweets
@@ -33,7 +53,7 @@ class TweetsController extends Controller
     }
 
     /**
-     * Show stats for all tweets
+     * Show stats for all tweets in database
      *
      * @return response
      */
@@ -41,8 +61,7 @@ class TweetsController extends Controller
     {
       if (Schema::hasCollection('tweets')) {
         return response()->json([
-          'stats' => $this->getStats(),
-          //'optimalTime' => $this->optimalTime()
+          'stats' => $this->getStats()
         ], 200);
       } else {
         return response()->json([
@@ -89,38 +108,24 @@ class TweetsController extends Controller
       {
         $firstDate = $dates[$i];
         $nextDate = $dates[$i+1];
+        
+        $value = Tweet::where('fulldate', '>=', DateTime::createFromFormat('m-d-Y h:i:s', "$firstDate 00:00:00"))
+                        ->where('fulldate', '<', DateTime::createFromFormat('m-d-Y h:i:s', "$nextDate 00:00:00"))
+                        ->sum($field);
+
+        if ($value == null) {
+          $value = 0;
+        }
+
         $results[] =
         [
-          'value' => Tweet::where('fulldate', '>=', DateTime::createFromFormat('m-d-Y h:i:s', "$firstDate 00:00:00"))
-                            ->where('fulldate', '<', DateTime::createFromFormat('m-d-Y h:i:s', "$nextDate 00:00:00"))
-                            ->sum($field),
+          'value' => $value,
           'date' => $firstDate,
         ];
       }
 
       return response()->json([
         $field => $results
-      ], 200);
-    }
-
-    /**
-     * Store a certain number of tweets for a certain handle
-     *
-     * @param Illuminate\Http\Request $request
-     * @param string $handle
-     * @param string $numTweets
-     * @return response
-     */
-    public function store(Request $request, $handle, $numTweets)
-    {
-      $this->dropAndRecreateTweets();
-
-      $statuses = $this->retrieveDataFromTwitter($handle, $numTweets);
-
-      $this->populateDbWithTweets($statuses);
-
-      return response()->json([
-        'message' => "Retrieval and storage was successful."
       ], 200);
     }
 
@@ -149,36 +154,6 @@ class TweetsController extends Controller
         'message' => "$day was the day of the week with the highest number of $field, "
                ."while $hour:00 was the time of day with the most $field."
       ], 200);
-
-
-    }
-
-    /**
-     * Calculate the stats for a given user
-     *
-     * @return array
-     */
-    private function getStats()
-    {
-      return [
-        'numberOfTweets' => Tweet::count(),
-        'tweetsWithLinks' => Tweet::where('links', true)->count(),
-        'numberOfRetweets' => Tweet::sum('retweets'),
-        'avgCharsPerTweet' => round(Tweet::avg('length'))
-      ];
-    }
-
-    /**
-     * Return the first key from an array
-     *
-     * @param array $array
-     * @return string
-     */
-    private function firstKey(array $array)
-    {
-      arsort($array);
-      reset($array);
-      return key($array);
     }
 
     /**
@@ -269,5 +244,34 @@ class TweetsController extends Controller
     private function convertDateFromTweet($date)
     {
       return DateTime::createFromFormat('D M d H:i:s O Y', $date);
+    }
+
+    /**
+     * Calculate the stats for a given user
+     *
+     * @return array
+     */
+    private function getStats()
+    {
+      return [
+        'numberOfTweets' => Tweet::count(),
+        'tweetsWithLinks' => Tweet::where('links', true)->count(),
+        'numberOfRetweets' => Tweet::sum('retweets'),
+        'avgCharsPerTweet' => round(Tweet::avg('length'))
+      ];
+    }
+
+
+    /**
+     * Return the first key from an array
+     *
+     * @param array $array
+     * @return string
+     */
+    private function firstKey(array $array)
+    {
+      arsort($array);
+      reset($array);
+      return key($array);
     }
 }
