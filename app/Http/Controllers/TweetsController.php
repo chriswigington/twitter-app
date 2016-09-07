@@ -16,6 +16,9 @@ use Abraham\TwitterOAuth\TwitterOAuth;
 
 use App\Tweet;
 
+use DateTime;
+use DateInterval;
+
 class TweetsController extends Controller
 {
 
@@ -56,6 +59,30 @@ class TweetsController extends Controller
       }
     }
 
+    public function fieldCount(Request $request, $field, $startDate, $endDate, $scale="day")
+    {
+      $rangeStart = DateTime::createFromFormat('m-d-Y', $startDate);
+
+      $rangeEnd = DateTime::createFromFormat('m-d-Y', $endDate);
+
+      if ($scale == 'year') {
+        $interval = DateInterval::createFromDateString('1 year');
+      } elseif ($scale == 'month') {
+        $interval = DateInterval::createFromDateString('1 month');
+      } else {
+        $interval = DateInterval::createFromDateString('1 day');
+      }
+
+      // $total = Orders::where('date', $date)->sum('retweets');
+
+      return response()->json([
+        'field' => $field,
+        'startDate' => $rangeStart,
+        'endDate' => $rangeEnd,
+        'interval' => $interval
+      ], 200);
+    }
+
     /**
      * Store a certain number of tweets for a certain handle
      *
@@ -73,7 +100,7 @@ class TweetsController extends Controller
       $this->populateDbWithTweets($statuses);
 
       return response()->json([
-        'message' => "Retrieval and storage successful."
+        'message' => $statuses
       ], 200);
     }
 
@@ -121,7 +148,7 @@ class TweetsController extends Controller
       $days_hours =[];
 
       foreach ($daysOfWeek as $key => $value) {
-        $days[$key] = DB::collection('tweets')->where('day', $value)->avg('retweets');
+        $days[$key] = DB::collection('tweets')->where('weekday', $value)->avg('retweets');
       }
 
       foreach ($hoursOfTheDay as $key => $value) {
@@ -131,7 +158,7 @@ class TweetsController extends Controller
       foreach ($daysOfWeek as $weekday => $day) {
         foreach($hoursOfTheDay as $time => $hour) {
          $days_hours[$weekday][$time] = DB::collection('tweets')
-                                        ->where('day', $day)
+                                        ->where('weekday', $day)
                                         ->where('hour', $hour)
                                         ->avg('retweets');
         }
@@ -228,9 +255,15 @@ class TweetsController extends Controller
     {
       $tweet = new Tweet;
 
+      $date = $this->convertDateFromTweet($status->created_at);
+
       $tweet->_id = $status->id;
-      $tweet->day = substr($status->created_at, 0, 3);
-      $tweet->hour = substr($status->created_at, 11, 2);
+      $tweet->weekday = $date->format('l');
+      $tweet->hour = $date->format('h');
+      $tweet->day = $date->format('d');
+      $tweet->month = $date->format('F');
+      $tweet->year = $date->format('Y');
+      $tweet->date = $date->format('m-d-Y');
       $tweet->text = $status->text;
       $tweet->length = strlen($status->text);
       $tweet->retweets = $status->retweet_count;
@@ -238,5 +271,10 @@ class TweetsController extends Controller
       $tweet->links = (bool) count($status->entities->urls);
 
       $tweet->save();
+    }
+
+    private function convertDateFromTweet($date)
+    {
+      return DateTime::createFromFormat('D M d H:i:s O Y', $date);
     }
 }

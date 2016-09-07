@@ -22,4 +22,5 @@ Route::group(['prefix' => 'v1'], function() {
   Route::get('tweets/{handle}/{numTweets}', 'TweetsController@store');
   Route::post('tweets/{handle}/{numTweets}', 'TweetsController@store');
   Route::get('stats', 'TweetsController@stats');
+  Route::get('stats/{field}/{startDate}/{endDate}/{scale?}', 'TweetsController@fieldCount');
 });
