@@ -1,27 +1,31 @@
-# Laravel PHP Framework
+# Basic Twitter API Laravel App
 
-[![Build Status](https://travis-ci.org/laravel/framework.svg)](https://travis-ci.org/laravel/framework)
-[![Total Downloads](https://poser.pugx.org/laravel/framework/d/total.svg)](https://packagist.org/packages/laravel/framework)
-[![Latest Stable Version](https://poser.pugx.org/laravel/framework/v/stable.svg)](https://packagist.org/packages/laravel/framework)
-[![Latest Unstable Version](https://poser.pugx.org/laravel/framework/v/unstable.svg)](https://packagist.org/packages/laravel/framework)
-[![License](https://poser.pugx.org/laravel/framework/license.svg)](https://packagist.org/packages/laravel/framework)
+## Environment Configuration
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable, creative experience to be truly fulfilling. Laravel attempts to take the pain out of development by easing common tasks used in the majority of web projects, such as authentication, routing, sessions, queueing, and caching.
+In order to be able to use this API, you'll need to acquire a Twitter developer account and an access token. When you have that information, you'll need to go into your local .env file in the Laravel project (you can just rename .env.example to .env), and add these fields in with the relevant values:
 
-Laravel is accessible, yet powerful, providing tools needed for large, robust applications. A superb inversion of control container, expressive migration system, and tightly integrated unit testing support give you the tools you need to build any application with which you are tasked.
+CONSUMER_KEY=
+CONSUMER_SECRET=
+ACCESS_TOKEN=
+ACCESS_TOKEN_SECRET=
 
-## Official Documentation
+We'll also be using Mongodb for our database, so you'll want to go ahead and update these values in the .env file as well:
 
-Documentation for the framework can be found on the [Laravel website](http://laravel.com/docs).
+DB_CONNECTION=mongodb
+DB_HOST=localhost
+DB_PORT=27017
+DB_DATABASE=twitterapp
+DB_USERNAME=
+DB_PASSWORD=
 
-## Contributing
+The DB_USERNAME and DB_PASSWORD can be any user info you set up to be an authenticated user in mongo for the database we'll be using (here just called 'twitterapp').
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](http://laravel.com/docs/contributions).
+## Using the API
 
-## Security Vulnerabilities
+To run this locally on your machine, you should be able to navigate to the twitter-app folder and run 'php artisan serve', which should then be running the API on 'http://localhost:8000' by default, so this will prefix all of our API calls, as will 'api/v1/', since this is an API.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell at taylor@laravel.com. All security vulnerabilities will be promptly addressed.
+To store a certain number of tweets by a certain handle to our database, the path would be:
 
-## License
+POST http://localhost:8000/api/v1/tweets/{handle}/{tweets}
 
-The Laravel framework is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
+where {handle} and {tweets} are replaced by a valid Twitter username and the number of tweets you'd like to capture, respectively. Performing this action first is necessary for any of the other actions to work.

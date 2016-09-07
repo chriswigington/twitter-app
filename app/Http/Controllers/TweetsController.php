@@ -50,7 +50,7 @@ class TweetsController extends Controller
       if (Schema::hasCollection('tweets')) {
         return response()->json([
           'stats' => $this->getStats(),
-          'optimalTime' => $this->optimalTime()
+          //'optimalTime' => $this->optimalTime()
         ], 200);
       } else {
         return response()->json([
@@ -61,9 +61,9 @@ class TweetsController extends Controller
 
     public function fieldCount(Request $request, $field, $startDate, $endDate, $scale="day")
     {
-      $rangeStart = DateTime::createFromFormat('m-d-Y', $startDate);
+      $results = [];
 
-      $rangeEnd = DateTime::createFromFormat('m-d-Y', $endDate);
+      $dates = [];
 
       if ($scale == 'year') {
         $interval = DateInterval::createFromDateString('1 year');
@@ -73,13 +73,31 @@ class TweetsController extends Controller
         $interval = DateInterval::createFromDateString('1 day');
       }
 
-      // $total = Orders::where('date', $date)->sum('retweets');
+      $rangeStart = DateTime::createFromFormat('m-d-Y h:i:s', "$startDate 00:00:00");
+
+      $rangeEnd = DateTime::createFromFormat('m-d-Y h:i:s', "$endDate 00:00:00")->add($interval);
+
+      while ($rangeStart <= $rangeEnd)
+      {
+        $dates[] = $rangeStart->format('m-d-Y');
+        $rangeStart->add($interval);
+      }
+
+      for ($i = 0; $i < count($dates)-1; $i++)
+      {
+        $firstDate = $dates[$i];
+        $nextDate = $dates[$i+1];
+        $results[] =
+        [
+          'value' => Tweet::where('fulldate', '>=', DateTime::createFromFormat('m-d-Y h:i:s', "$firstDate 00:00:00"))
+                            ->where('fulldate', '<', DateTime::createFromFormat('m-d-Y h:i:s', "$nextDate 00:00:00"))
+                            ->sum($field),
+          'date' => $firstDate,
+        ];
+      }
 
       return response()->json([
-        'field' => $field,
-        'startDate' => $rangeStart,
-        'endDate' => $rangeEnd,
-        'interval' => $interval
+        $field => $results
       ], 200);
     }
 
@@ -240,10 +258,7 @@ class TweetsController extends Controller
      */
     private function populateDbWithTweets($statuses)
     {
-      foreach ($statuses as $status)
-      {
-        $this->convertToTweet($status);
-      }
+      foreach ($statuses as $status) { $this->convertToTweet($status); }
     }
 
     /**
@@ -264,6 +279,7 @@ class TweetsController extends Controller
       $tweet->month = $date->format('F');
       $tweet->year = $date->format('Y');
       $tweet->date = $date->format('m-d-Y');
+      $tweet->fulldate = $date;
       $tweet->text = $status->text;
       $tweet->length = strlen($status->text);
       $tweet->retweets = $status->retweet_count;
@@ -273,6 +289,11 @@ class TweetsController extends Controller
       $tweet->save();
     }
 
+    /**
+     * Convert the incoming date info to PHP DateTime object
+     *
+     * @return none
+     */
     private function convertDateFromTweet($date)
     {
       return DateTime::createFromFormat('D M d H:i:s O Y', $date);
