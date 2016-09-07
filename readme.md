@@ -32,7 +32,7 @@ The DB_USERNAME and DB_PASSWORD can be any user info you set up to be an authent
 
 To run this locally on your machine, you should be able to navigate to the twitter-app folder and run 'php artisan serve', which should then be running the API on 'http://localhost:8000' by default. As this is an API, all of our HTTP requests will be prefixed with 'api/v1/'.
 
-### Storing Tweets in the Database
+### Storing tweets in the database
 
 Before we can use any of the other features, we first have to populate our database with some tweets. To store a certain number of tweets by a certain handle to our database, the path is:
 
@@ -48,9 +48,13 @@ GET http://localhost:8000/api/v1/tweets
 
 alone, which returns a JSON object with a single field called "data" with points to an array of objects containing the information on each tweet.
 
+### Retrieving statistics from the database
+
 To get basic stats on the collection of tweets that we've stored in the database, you can call:
 
 GET http://localhost:8000/api/v1/stats
+
+### Field stats by date range
 
 You can dig in a little deeper by specifying a field that you'd like to look at, as well as a date range, like so:
 
@@ -63,6 +67,8 @@ If we want to specify even further, we can add an additional parameter:
 GET http://localhost:8000/api/v1/stats/{field}/{startDate}/{endDate}/{scale}
 
 {scale} (for lack of a better term) simply refers to the granularity you'd like to group the results by. The options are "year", "month", and "day". If you don't include a parameter, or put in anything aside from those options, it will simply act as if "day" had been chosen.
+
+### Optimal times to tweet
 
 Last but not least, if you'd like to see what the optimal time is to tweet, I've created an additional endpoint:
 
