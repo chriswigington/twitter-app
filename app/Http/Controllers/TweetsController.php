@@ -1,21 +1,13 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
-
 use App\Http\Requests;
-
 use Illuminate\Support\Facades\DB;
-
 use Illuminate\Support\Facades\Schema;
-
 use Jenssegers\Mongodb\Schema\Blueprint;
-
 use Abraham\TwitterOAuth\TwitterOAuth;
-
 use App\Tweet;
-
 use DateTime;
 use DateInterval;
 
@@ -31,7 +23,7 @@ class TweetsController extends Controller
     {
       if (Schema::hasCollection('tweets')) {
         return response()->json([
-          'data' => DB::collection('tweets')->get()
+          'data' => DB::collection('tweets')->get(['text', 'date', 'retweets', 'favorites'])
         ], 200);
       } else {
         return response()->json([
@@ -59,7 +51,17 @@ class TweetsController extends Controller
       }
     }
 
-    public function fieldCount(Request $request, $field, $startDate, $endDate, $scale="day")
+    /**
+     * Find the amount associated with a given field for a given amount of time
+     *
+     * @param Request $request
+     * @param string $field
+     * @param string $startDate
+     * @param string $endDate
+     * @param string $scale="day"
+     * @return response
+     */
+    public function fieldCount(Request $request, string $field, string $startDate, string $endDate, string $scale="day")
     {
       $results = [];
 
@@ -118,8 +120,37 @@ class TweetsController extends Controller
       $this->populateDbWithTweets($statuses);
 
       return response()->json([
-        'message' => $statuses
+        'message' => "Retrieval and storage was successful."
       ], 200);
+    }
+
+    /**
+     * Find the optimal time for the user to post
+     *
+     * @param Request $request
+     * @param string $field
+     * @return response
+     */
+    public function optimalTime(Request $request, string $field='retweets') {
+      $days = [];
+      foreach (DB::collection('tweets')->groupBy('weekday')->get() as $object) {
+        $days[$object['weekday']] = DB::collection('tweets')->where('weekday', $object['weekday'])->avg($field);
+      }
+
+      $hours = [];
+      foreach (DB::collection('tweets')->groupBy('hour')->get() as $object) {
+        $hours[$object['hour']] = DB::collection('tweets')->where('hour', $object['hour'])->avg($field);
+      }
+
+      $day = $this->firstKey($days);
+      $hour = $this->firstKey($hours);
+
+      return response()->json([
+        'message' => "$day was the day of the week with the highest number of $field, "
+               ."while $hour:00 was the time of day with the most $field."
+      ], 200);
+
+
     }
 
     /**
@@ -138,65 +169,6 @@ class TweetsController extends Controller
     }
 
     /**
-     * Find the optimal time for the user to post
-     *
-     * @return string
-     */
-    private function optimalTime() {
-      $daysOfWeek = [
-        'Monday' => 'Mon', 'Tuesday' => 'Tue',
-        'Wednesday' => 'Wed', 'Thursday' => 'Thu',
-        'Friday' => 'Fri', 'Saturday' => 'Sat',
-        'Sunday' => 'Sun'
-      ];
-
-      $hoursOfTheDay = [
-        'midnight' => '00', '1AM' => '01', '2AM' => '02',
-        '3AM' => '03', '4AM' => '04', '5AM' => '05',
-        '6AM' => '06', '7AM' => '07', '8AM' => '08',
-        '9AM' => '09', '10AM' => '10', '11AM' => '11',
-        'noon' => '12', '1PM' => '13', '2PM' => '14',
-        '3PM' => '15', '4PM' => '16', '5PM' => '17',
-        '6PM' => '18', '7PM' => '19', '8PM' => '20',
-        '9PM' => '21', '10PM' => '22', '11PM' => '23',
-      ];
-
-      $days = [];
-      $hours = [];
-      $days_hours =[];
-
-      foreach ($daysOfWeek as $key => $value) {
-        $days[$key] = DB::collection('tweets')->where('weekday', $value)->avg('retweets');
-      }
-
-      foreach ($hoursOfTheDay as $key => $value) {
-        $hours[$key] = DB::collection('tweets')->where('hour', $value)->avg('retweets');
-      }
-
-      foreach ($daysOfWeek as $weekday => $day) {
-        foreach($hoursOfTheDay as $time => $hour) {
-         $days_hours[$weekday][$time] = DB::collection('tweets')
-                                        ->where('weekday', $day)
-                                        ->where('hour', $hour)
-                                        ->avg('retweets');
-        }
-      }
-
-      foreach ($days_hours as $weekday => $timesArray) {
-        $days_hours[$weekday] = $this->firstKey($timesArray);
-      }
-
-      $day = $this->firstKey($days);
-      $hour = $this->firstKey($hours);
-
-
-      return var_dump($days_hours);
-
-      //"$day was the day of the week with the highest number of retweets, "
-      //        ."while $hour was the time of day with the most retweets.";
-    }
-
-    /**
      * Return the first key from an array
      *
      * @param array $array
@@ -206,7 +178,7 @@ class TweetsController extends Controller
     {
       arsort($array);
       reset($array);
-      return [key($array), current($array)];
+      return key($array);
     }
 
     /**
